@@ -103,8 +103,15 @@ class PSMNet(nn.Module):
 
         refimg_fea     = self.feature_extraction(left)
         targetimg_fea  = self.feature_extraction(right)
-        dispNumOfValues = int(math.floor((2 * self.maxdisp / 4)+1)) # turns the absolutr value max_disp to be corresponding number of elements in [-max_disp, max_disp];
-        pivotIdx = (dispNumOfValues-1)/2
+        mod = 16-((2*self.maxdisp)+1)%16
+        halfMod = math.floor(mod/2)
+        numOfDispPos = self.maxdisp + (mod-halfMod)
+        numOfDispNeg = self.maxdisp + halfMod
+        dispNumOfValues = (numOfDispPos + numOfDispNeg +1)/4
+        pivotIdx = numOfDispNeg/4; #actually it is numOfDispNeg+1 but indices start from zero.
+
+        #dispNumOfValues = int(math.floor((2 * self.maxdisp / 4)+1)) # turns the absolutr value max_disp to be corresponding number of elements in [-max_disp, max_disp];
+
         # Cost Volume construction
         #Original Code: cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1] * 2, self.maxdisp / 4, refimg_fea.size()[2],refimg_fea.size()[3]).zero_()).cuda()
         cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1]*2, dispNumOfValues ,  refimg_fea.size()[2],  refimg_fea.size()[3]).zero_()).cuda()
@@ -151,8 +158,8 @@ class PSMNet(nn.Module):
         cost3 = self.classif3(out3) + cost2
 
         if self.training:
-		cost1 = F.upsample(cost1, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
-		cost2 = F.upsample(cost2, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
+		cost1 = F.upsample(cost1, [dispNumOfValues,left.size()[2],left.size()[3]], mode='trilinear')
+		cost2 = F.upsample(cost2, [dispNumOfValues,left.size()[2],left.size()[3]], mode='trilinear')
 
 		cost1 = torch.squeeze(cost1,1)
 		pred1 = F.softmax(cost1,dim=1)
