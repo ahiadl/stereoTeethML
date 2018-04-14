@@ -1,0 +1,150 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+BCECriterion2:__init	BCECriterion2.lua	/^function BCECriterion2:__init()$/;"	f
+BCECriterion2:updateGradInput	BCECriterion2.lua	/^function BCECriterion2:updateGradInput(input, target)$/;"	f
+BCECriterion2:updateOutput	BCECriterion2.lua	/^function BCECriterion2:updateOutput(input, target)$/;"	f
+CFLAGS	Makefile	/^CFLAGS=-I$(PREFIX)\/include\/THC -I$(PREFIX)\/include\/TH -I$(PREFIX)\/include$/;"	m
+LDFLAGS_CPP	Makefile	/^LDFLAGS_CPP=-L$(PREFIX)\/lib -lluaT -lTH `pkg-config --libs opencv`$/;"	m
+LDFLAGS_NVCC	Makefile	/^LDFLAGS_NVCC=-L$(PREFIX)\/lib -Xlinker -rpath,$(PREFIX)\/lib -lluaT -lTHC -lTH -lpng$/;"	m
+Margin2:__init	Margin2.lua	/^function Margin2:__init(margin, pow)$/;"	f
+Margin2:updateGradInput	Margin2.lua	/^function Margin2:updateGradInput(input, target)$/;"	f
+Margin2:updateOutput	Margin2.lua	/^function Margin2:updateOutput(input, target)$/;"	f
+Normalize2:__init	Normalize2.lua	/^function Normalize2:__init()$/;"	f
+Normalize2:updateGradInput	Normalize2.lua	/^function Normalize2:updateGradInput(input, gradOutput)$/;"	f
+Normalize2:updateOutput	Normalize2.lua	/^function Normalize2:updateOutput(input)$/;"	f
+PREFIX	Makefile	/^PREFIX=$(HOME)\/torch\/install$/;"	m
+SpatialConvolution1_fw:__init	SpatialConvolution1_fw.lua	/^function SpatialConvolution1_fw:__init(inputSize, outputSize)$/;"	f
+SpatialConvolution1_fw:updateOutput	SpatialConvolution1_fw.lua	/^function SpatialConvolution1_fw:updateOutput(input)$/;"	f
+SpatialLogSoftMax:__init	SpatialLogSoftMax.lua	/^function SpatialLogSoftMax:__init(constant)$/;"	f
+SpatialLogSoftMax:updateGradInput	SpatialLogSoftMax.lua	/^function SpatialLogSoftMax:updateGradInput(input, gradOutput)$/;"	f
+SpatialLogSoftMax:updateOutput	SpatialLogSoftMax.lua	/^function SpatialLogSoftMax:updateOutput(input)$/;"	f
+StereoJoin1:__init	StereoJoin1.lua	/^function StereoJoin1:__init()$/;"	f
+StereoJoin1:updateGradInput	StereoJoin1.lua	/^function StereoJoin1:updateGradInput(input, gradOutput)$/;"	f
+StereoJoin1:updateOutput	StereoJoin1.lua	/^function StereoJoin1:updateOutput(input)$/;"	f
+StereoJoin:__init	StereoJoin.lua	/^function StereoJoin:__init(disp_max)$/;"	f
+StereoJoin:updateOutput	StereoJoin.lua	/^function StereoJoin:updateOutput(input)$/;"	f
+X	preprocess_mb.py	/^X = []$/;"	v
+XX	preprocess_mb.py	/^        XX = []$/;"	v
+XX	preprocess_mb.py	/^    XX = []$/;"	v
+action	hs.py	/^    action = 'train_tr'$/;"	v
+base1	preprocess_mb.py	/^    base1 = 'data.mb\/unzip\/vision.middlebury.edu\/stereo\/data\/scenes2003\/{}'.format(dir)$/;"	v
+base1	preprocess_mb.py	/^    base1 = 'data.mb\/unzip\/vision.middlebury.edu\/stereo\/data\/scenes{}\/HalfSize'.format(year)$/;"	v
+base1	preprocess_mb.py	/^base1 = 'data.mb\/unzip\/MiddEval3'$/;"	v
+base1	preprocess_mb.py	/^base1 = 'data.mb\/unzip\/vision.middlebury.edu\/stereo\/data\/scenes2001\/data'$/;"	v
+base1	preprocess_mb.py	/^base1 = 'data.mb\/unzip\/vision.middlebury.edu\/stereo\/data\/scenes2014\/datasets'$/;"	v
+base2	preprocess_mb.py	/^        base2 = os.path.join(base1, dir)$/;"	v
+base2	preprocess_mb.py	/^    base2 = os.path.join(base1, dir)$/;"	v
+base2	preprocess_mb.py	/^    base2 = os.path.join(base1, dir1)$/;"	v
+base3	preprocess_mb.py	/^                base3 = os.path.join(base2, 'Illum{}\/Exp{}'.format(light + 1, exp))$/;"	v
+base3	preprocess_mb.py	/^        base3 = os.path.join(base2, dir2)$/;"	v
+calib	preprocess_mb.py	/^        calib = open(os.path.join(base3, 'calib.txt')).read()$/;"	v
+clean_net	main.lua	/^function clean_net(net)$/;"	f
+disp	samples/load_bin.py	/^disp = np.memmap('..\/disp.bin', dtype=np.float32, shape=(1, 1, 370, 1226))$/;"	v
+disp0	preprocess_mb.py	/^            disp0 = cv2.imread(os.path.join(base2, fname_disp0), 0).astype(np.float32) \/ 16$/;"	v
+disp0	preprocess_mb.py	/^            disp0 = cv2.imread(os.path.join(base2, fname_disp0), 0).astype(np.float32) \/ 8$/;"	v
+disp0	preprocess_mb.py	/^        disp0 = cv2.imread(base2 + '\/disp1.png', 0).astype(np.float32) \/ 2$/;"	v
+disp0	preprocess_mb.py	/^    disp0 = cv2.imread(base1 + '\/disp2.pgm', 0).astype(np.float32) \/ 2$/;"	v
+disp1	preprocess_mb.py	/^            disp1 = cv2.imread(os.path.join(base2, fname_disp1), 0).astype(np.float32) \/ 8$/;"	v
+disp1	preprocess_mb.py	/^        disp1 = cv2.imread(base2 + '\/disp5.png', 0).astype(np.float32) \/ 2$/;"	v
+disp1	preprocess_mb.py	/^    disp1 = cv2.imread(base1 + '\/disp6.pgm', 0).astype(np.float32) \/ 2$/;"	v
+dispnoc	preprocess_mb.py	/^dispnoc = []$/;"	v
+fix_border	main.lua	/^function fix_border(net, vol, direction)$/;"	f
+fname_submit	preprocess_mb.py	/^fname_submit = []$/;"	v
+forward_free	main.lua	/^function forward_free(net, input)$/;"	f
+fromfile	main.lua	/^function fromfile(fname)$/;"	f
+fromfile	samples/bin2png.lua	/^function fromfile(fname)$/;"	f
+funcs	cv.cpp	/^static const struct luaL_Reg funcs[] = {$/;"	v	typeref:struct:luaL_Reg	file:
+gaussian	main.lua	/^function gaussian(sigma)$/;"	f
+get_window_size	main.lua	/^function get_window_size(net)$/;"	f
+i	hs.py	/^            i = random.randrange(len(params))$/;"	v
+imgs	preprocess_mb.py	/^            imgs = []$/;"	v
+isnan	main.lua	/^function isnan(n)$/;"	f
+jobs	rgs_qsub.py	/^jobs = {}$/;"	v
+left	samples/load_bin.py	/^left = np.memmap('..\/left.bin', dtype=np.float32, shape=(1, 70, 370, 1226))$/;"	v
+load	main.lua	/^         function load(fname)$/;"	f
+load_nnz	main.lua	/^         function load_nnz(fname)$/;"	f
+load_pfm	preprocess_mb.py	/^def load_pfm(fname, downsample):$/;"	f
+luaopen_libcv	cv.cpp	/^extern "C" int luaopen_libcv(lua_State *L) {$/;"	f
+main	samples/load_bin.c	/^int main(void)$/;"	f
+make_patch	main.lua	/^   function make_patch(src, dst, dim3, dim4, scale, phi, trans, hshear, brightness, contrast)$/;"	f
+mask	preprocess_mb.py	/^            mask = cv2.imread('tmp\/mask.png', 0)$/;"	v
+mask	preprocess_mb.py	/^            mask = cv2.imread(os.path.join(base2, 'nonocc.png'), 0)$/;"	v
+mask	preprocess_mb.py	/^        mask = cv2.imread('tmp\/mask.png', 0)$/;"	v
+mask	preprocess_mb.py	/^    mask = cv2.imread('tmp\/mask.png', 0)$/;"	v
+meta	preprocess_mb.py	/^meta = []$/;"	v
+meta	preprocess_mb.py	/^meta = np.array(meta, dtype=np.int32)$/;"	v
+mul32	main.lua	/^   function mul32(a,b)$/;"	f
+ndisp	preprocess_mb.py	/^        ndisp = int(np.ceil(disp0.max()))$/;"	v
+ndisp	preprocess_mb.py	/^        ndisp = int(re.search('ndisp=(.*)', calib).group(1))$/;"	v
+ndisp	preprocess_mb.py	/^    ndisp = int(np.ceil(disp0.max()))$/;"	v
+new_score	hs.py	/^    new_score = float(o.split()[-1])$/;"	v
+njobs	rgs_qsub.py	/^njobs = int(njobs)$/;"	v
+nnz_te	preprocess_mb.py	/^nnz_te = []$/;"	v
+nnz_te	preprocess_mb.py	/^nnz_te = np.vstack(nnz_te)$/;"	v
+nnz_tr	preprocess_mb.py	/^nnz_tr = []$/;"	v
+nnz_tr	preprocess_mb.py	/^nnz_tr = np.vstack(nnz_tr)$/;"	v
+ns	hs.py	/^                ns = [x[i]]$/;"	v
+o	hs.py	/^    o = subprocess.check_output('.\/main.lua {} {} -a {} {}'.format(dataset, arch, action, ps_str), shell=True)$/;"	v
+oe	rgs_qsub.py	/^oe = 'oe.{}_{}'.format(dataset, action)$/;"	v
+output_dir	preprocess_mb.py	/^output_dir = 'data.mb.{}_{}'.format(rectification, color)$/;"	v
+params	hs.py	/^    params = [$/;"	v
+params	rgs.py	/^    params = [$/;"	v
+params	rgs_qsub.py	/^    params = [$/;"	v
+pool	rgs.py	/^pool = multiprocessing.Pool(len(workers))$/;"	v
+print_net	main.lua	/^function print_net(net)$/;"	f
+print_r	main.lua	/^function print_r(arr, indentLevel)$/;"	f
+ps	hs.py	/^                ps = [random.randint(0, len(params) - 1)]$/;"	v
+ps	hs.py	/^                ps = range(len(params))$/;"	v
+ps	hs.py	/^    ps = [(params[i][0], params[i][1][x[i]]) for i in range(len(params))]$/;"	v
+ps_str	hs.py	/^        ps_str = ps_str.split()$/;"	v
+ps_str	hs.py	/^    ps_str = ' '.join('-{} {}'.format(*p) for p in ps)$/;"	v
+read_im	preprocess_mb.py	/^def read_im(fname, downsample):$/;"	f
+results	hs.py	/^        results = []$/;"	v
+results	rgs.py	/^results = []$/;"	v
+results	rgs_qsub.py	/^results = []$/;"	v
+right	samples/load_bin.py	/^right = np.memmap('..\/right.bin', dtype=np.float32, shape=(1, 70, 370, 1226))$/;"	v
+sample	main.lua	/^      function sample(xs, p)$/;"	f
+saveOutlier	main.lua	/^function saveOutlier(fname, x0, outlier)$/;"	f
+savePNG	main.lua	/^function savePNG(fname, x, isvol)$/;"	f
+save_net	main.lua	/^function save_net(epoch)$/;"	f
+save_pfm	preprocess_mb.py	/^def save_pfm(fname, image, scale=1):$/;"	f
+sem	rgs.py	/^sem = threading.Semaphore(len(workers))$/;"	v
+signal_handler	rgs_qsub.py	/^def signal_handler(signal, frame):$/;"	f
+slice_input	StereoJoin1.lua	/^function slice_input(input)$/;"	f
+start_job	rgs.py	/^def start_job(ps, level):$/;"	f
+stereo_predict	main.lua	/^function stereo_predict(x_batch, id)$/;"	f
+stop_job	rgs.py	/^def stop_job(res):$/;"	f
+te	preprocess_mb.py	/^te = np.arange(1, 11)$/;"	v
+testCriterion	Test.lua	/^function testCriterion(module, input, target)$/;"	f
+testJacobian	Test.lua	/^function testJacobian(module, input, x, dx)$/;"	f
+testJacobianParameters	Test.lua	/^function testJacobianParameters(module, input)$/;"	f
+testNetworkParameters	Test.lua	/^function testNetworkParameters(network, criterion, input, target)$/;"	f
+test_Margin2	test.lua	/^function test_Margin2()$/;"	f
+test_Normalize	test.lua	/^function test_Normalize()$/;"	f
+test_StereoJoin	test.lua	/^function test_StereoJoin()$/;"	f
+test_StereoJoin1	test.lua	/^function test_StereoJoin1()$/;"	f
+tofile	preprocess_kitti.lua	/^   function tofile(fname, x)$/;"	f
+tofile	preprocess_mb.py	/^def tofile(fname, x):$/;"	f
+tofile	preprocess_teeth.lua	/^function tofile(fname, x)$/;"	f
+val	hs.py	/^            val = float(ps_str[2 * i + 1])$/;"	v
+val_ind	hs.py	/^            val_ind = min([(abs(val - v), j) for j, v in enumerate(params[i][1])])[1]$/;"	v
+valid	hs.py	/^    def valid(ps):$/;"	f
+valid	rgs.py	/^    def valid(ps):$/;"	f
+valid	rgs_qsub.py	/^    def valid(ps):$/;"	f
+visited	rgs.py	/^visited = set()$/;"	v
+visited	rgs_qsub.py	/^visited = set()$/;"	v
+warp_affine	cv.cpp	/^int warp_affine(lua_State *L)$/;"	f
+workers	rgs.py	/^workers = [$/;"	v
+x	hs.py	/^        x = []$/;"	v
+x0	preprocess_mb.py	/^                x0 = read_im(os.path.join(base3, 'view1.png'), False)$/;"	v
+x0	preprocess_mb.py	/^        x0 = read_im(os.path.join(base2, fname_x0), False)$/;"	v
+x0	preprocess_mb.py	/^        x0 = read_im(os.path.join(base3, 'im0.png'), False)$/;"	v
+x0	preprocess_mb.py	/^    x0 = read_im(base1 + '\/im2.ppm', False)$/;"	v
+x1	preprocess_mb.py	/^                x1 = read_im(os.path.join(base3, 'view5.png'), False)$/;"	v
+x1	preprocess_mb.py	/^        x1 = read_im(os.path.join(base2, fname_x1), False)$/;"	v
+x1	preprocess_mb.py	/^        x1 = read_im(os.path.join(base3, 'im1.png'), False)$/;"	v
+x1	preprocess_mb.py	/^    x1 = read_im(base1 + '\/im6.ppm', False)$/;"	v

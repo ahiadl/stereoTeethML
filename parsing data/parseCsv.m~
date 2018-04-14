@@ -1,0 +1,31 @@
+close all;
+clear all;
+clc;
+
+cd ./Temp/GT_csv
+mkdir GT-streched
+mkdir GT
+imagesStruct = dir('*.csv');
+numOfImages = numel(imagesStruct);
+prefix = 'GT_';
+suffix = '.csv';
+bias = 128;
+
+
+for i = 0:numOfImages-1
+    idx = num2str(i);
+    origGT = csvread([prefix idx suffix]);
+    
+    idx = pad(idx,5,'left','0');
+    tmpGT = (origGT/16); %DEBUG
+    curGT = uint16((origGT/16 + bias)*256);
+    
+    imwrite(curGT, ['./GT/GT_',idx,'.png']);
+   
+%     curGT = origGT/16;
+%     curGT = (curGT-min(min(curGT)));
+%     curGT = curGT*(256/max(max(curGT)));
+%     
+%     imwrite(uint8(curGT), ['./GT-streched/GT_',idx,'.png']);  
+end
+

@@ -1,0 +1,24 @@
+teeth slow -a train_tr 
+Done initialize options according to user request
+inside loading data
+conv(in=1, out=112, k=3)
+cudnn.ReLU
+conv(in=112, out=112, k=3)
+cudnn.ReLU
+conv(in=112, out=112, k=3)
+cudnn.ReLU
+conv(in=112, out=112, k=3)
+cudnn.ReLU
+nn.Reshape(128x224)
+nn.Linear(224 -> 384)
+cudnn.ReLU
+nn.Linear(384 -> 384)
+cudnn.ReLU
+nn.Linear(384 -> 384)
+cudnn.ReLU
+nn.Linear(384 -> 384)
+cudnn.ReLU
+nn.Linear(384 -> 1)
+cudnn.Sigmoid
+1	0.68743977462305	0.03	1111.5085790157
+2	0.6861066848334	0.03	2226.3325381279
