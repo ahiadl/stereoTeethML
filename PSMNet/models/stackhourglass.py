@@ -99,6 +99,7 @@ class PSMNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
+
     def forward(self, left, right):
 
         refimg_fea     = self.feature_extraction(left)
@@ -107,15 +108,13 @@ class PSMNet(nn.Module):
         halfMod = math.floor(mod/2)
         numOfDispPos = self.maxdisp + (mod-halfMod)
         numOfDispNeg = self.maxdisp + halfMod
-        dispNumOfValues = (numOfDispPos + numOfDispNeg +1)/4
-        pivotIdx = numOfDispNeg/4; #actually it is numOfDispNeg+1 but indices start from zero.
+        self.maxdisp = int(numOfDispPos + numOfDispNeg + 1)
+
+        dispNumOfValues = int(self.maxdisp/4) #for the quarter dimesions
+        pivotIdx = int(math.floor(numOfDispNeg/4)); #actually it is floor(numOfDispNeg/4)+1 but indices start from zero.
 
         #dispNumOfValues = int(math.floor((2 * self.maxdisp / 4)+1)) # turns the absolutr value max_disp to be corresponding number of elements in [-max_disp, max_disp];
-
-        # Cost Volume construction
-        #Original Code: cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1] * 2, self.maxdisp / 4, refimg_fea.size()[2],refimg_fea.size()[3]).zero_()).cuda()
         cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1]*2, dispNumOfValues ,  refimg_fea.size()[2],  refimg_fea.size()[3]).zero_()).cuda()
-        #TODO: verify this applies for disp of [-max_disp:max_disp]
         #DIMENSIONS: [batch, 2*convLayers(features), 0.25D ,0.25H, 0.25W], defaule values: [1,64,31,85,93]
         for i in range(dispNumOfValues):
             dispPatchSize = abs(i - pivotIdx)
@@ -128,16 +127,6 @@ class PSMNet(nn.Module):
             else:                    # Negative Disparity
              cost[:, :refimg_fea.size()[1], i, :, :-dispPatchSize] = refimg_fea[:, :, :, :-dispPatchSize]
              cost[:, refimg_fea.size()[1]:, i, :, :-dispPatchSize] = targetimg_fea[:, :, :, dispPatchSize:]
-
-        # Original code - not suitable for negative disparity values.
-        # for i in range(self.maxdisp / 4):
-        #     if i > 0:
-        #         cost[:, :refimg_fea.size()[1], i, :, i:] = refimg_fea[:, :, :, i:]
-        #         cost[:, refimg_fea.size()[1]:, i, :, i:] = targetimg_fea[:, :, :, :-i]
-        #     else:
-        #         cost[:, :refimg_fea.size()[1], i, :, :] = refimg_fea
-        #         cost[:, refimg_fea.size()[1]:, i, :, :] = targetimg_fea
-
 
         cost = cost.contiguous()
 
@@ -156,23 +145,30 @@ class PSMNet(nn.Module):
         cost1 = self.classif1(out1)
         cost2 = self.classif2(out2) + cost1
         cost3 = self.classif3(out3) + cost2
+        # costx = [batch, feat, 0.25D, 0.25H, 0.25W]
+
 
         if self.training:
-		cost1 = F.upsample(cost1, [dispNumOfValues,left.size()[2],left.size()[3]], mode='trilinear')
-		cost2 = F.upsample(cost2, [dispNumOfValues,left.size()[2],left.size()[3]], mode='trilinear')
+            cost1 = F.upsample(cost1, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
+            cost2 = F.upsample(cost2, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
+            # costx = [batch, 1, D, H, W]
+            cost1 = torch.squeeze(cost1,1)
+            # costx = [batch, D, H, W]
+            pred1 = F.softmax(cost1,dim=1)
+            # predx = [batch, H, W]
+            pred1 = disparityregression(self.maxdisp)(pred1)
+            #pred1 = pred1.add(-numOfDispNeg)
 
-		cost1 = torch.squeeze(cost1,1)
-		pred1 = F.softmax(cost1,dim=1)
-		pred1 = disparityregression(self.maxdisp)(pred1)
-
-		cost2 = torch.squeeze(cost2,1)
-		pred2 = F.softmax(cost2,dim=1)
-		pred2 = disparityregression(self.maxdisp)(pred2)
+            cost2 = torch.squeeze(cost2,1)
+            pred2 = F.softmax(cost2,dim=1)
+            pred2 = disparityregression(self.maxdisp)(pred2)
+            #pred2 = pred2.add(-numOfDispNeg)
 
         cost3 = F.upsample(cost3, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
         cost3 = torch.squeeze(cost3,1)
         pred3 = F.softmax(cost3,dim=1)
         pred3 = disparityregression(self.maxdisp)(pred3)
+        #pred3 = pred3.add(-numOfDispNeg)
 
         if self.training:
             return pred1, pred2, pred3
