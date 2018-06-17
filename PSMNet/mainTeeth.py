@@ -1,6 +1,8 @@
 from __future__ import print_function
 import argparse
 import os
+import sys
+import psutil
 import random
 import torch
 import torch.nn as nn
@@ -16,6 +18,8 @@ import math
 from dataloader import listTeethFile as lt
 from dataloader import teethLoader as DA
 from models import *
+import gc
+import logging
 
 parser = argparse.ArgumentParser(description='PSMNet')
 parser.add_argument('--maxdisp', type=int ,default=60,
@@ -24,7 +28,7 @@ parser.add_argument('--model', default='stackhourglass',
                     help='select model')
 parser.add_argument('--datapath', default='./data/training',
                     help='datapath')
-parser.add_argument('--epochs', type=int, default=10,
+parser.add_argument('--epochs', type=int, default=1000,
                     help='number of epochs to train')
 parser.add_argument('--loadmodel', default= None,
                     help='load model')
@@ -34,10 +38,12 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('--batch_size', type=int, default=1,
+parser.add_argument('--batch_size', type=int, default=3,
                     help='number of images per batch, default:1')
 args = parser.parse_args()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
+
+logging.basicConfig(filename='trainingLog.log',level=logging.INFO)
 
 torch.manual_seed(args.seed)
 if args.cuda:
@@ -115,8 +121,8 @@ def train(imgL,imgR, disp_L):
 
 def test(imgL,imgR,disp_true):
         model.eval()
-        imgL   = Variable(torch.FloatTensor(imgL))
-        imgR   = Variable(torch.FloatTensor(imgR))   
+        imgL   = Variable(torch.FloatTensor(imgL), volatile=True)
+        imgR   = Variable(torch.FloatTensor(imgR), volatile=True)
         if args.cuda:
             imgL, imgR = imgL.cuda(), imgR.cuda()
 
@@ -124,16 +130,15 @@ def test(imgL,imgR,disp_true):
         mask = disp_true < 192
         #----
 
-        with torch.no_grad():
-            output3 = model(imgL,imgR)
+        output3 = model(imgL,imgR)
 
         output = torch.squeeze(output3.data.cpu(),1)[:,4:,:]
 
-        if len(disp_true[mask])==0:
-           loss = 0
-        else:
-           loss = torch.mean(torch.abs(output[mask]-disp_true[mask]))  # end-point-error
-
+        # if len(disp_true[mask])==0:
+        #    loss = 0
+        # else:
+        #    loss = torch.mean(torch.abs(output[mask]-disp_true[mask]))  # end-point-error
+        loss =0
         return loss
 
 def adjust_learning_rate(optimizer, epoch):
@@ -142,52 +147,69 @@ def adjust_learning_rate(optimizer, epoch):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+def cpuStats():
+    print(sys.version)
+    print(psutil.cpu_percent())
+    print(psutil.virtual_memory())  # physical memory usage
+    pid = os.getpid()
+    py = psutil.Process(pid)
+    memoryUse = py.memory_info()[0] / 2. ** 30  # memory use in GB...I think
+    print('memory GB:', memoryUse)
+
+def memReport():
+    for obj in gc.get_objects():
+        if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+            print(type(obj), obj.size())
 
 def main():
 
-	start_full_time = time.time()
-	for epoch in range(1, args.epochs+1):
-	   print('This is %d-th epoch' %(epoch))
-	   total_train_loss = 0
-	   adjust_learning_rate(optimizer,epoch)
+    start_full_time = time.time()
+    for epoch in range(1, args.epochs+1):
+        print('This is %d-th epoch' % (epoch))
+        logging.info('This is %d-th epoch' %(epoch))
+        total_train_loss = 0
+        adjust_learning_rate(optimizer,epoch)
 
-	   ## training ##
-	   #enumerate() - Return an enumerate object. sequence must be a sequence, an iterator, or some other object which supports iteration. 
-	   #The next() method of the iterator returned by enumerate() returns a tuple containing a count (from start which defaults to 0) 
-	   #and the values obtained from iterating over sequence
-	   #tuple -  a tuple is a finite ordered list (sequence) of elements
-	   for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
-	     start_time = time.time()
+       ## training ##
+       #enumerate() - Return an enumerate object. sequence must be a sequence, an iterator, or some other object which supports iteration.
+       #The next() method of the iterator returned by enumerate() returns a tuple containing a count (from start which defaults to 0)
+       #and the values obtained from iterating over sequence
+       #tuple -  a tuple is a finite ordered list (sequence) of elements
+        for batch_idx, (imgL_crop, imgR_crop, disp_crop_L) in enumerate(TrainImgLoader):
+            start_time = time.time()
+            loss = train(imgL_crop,imgR_crop, disp_crop_L)
+            logging.info('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
+            print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
+            total_train_loss += loss
+        logging.info('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
+        print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
 
-	     loss = train(imgL_crop,imgR_crop, disp_crop_L)
-	     print('Iter %d training loss = %.3f , time = %.2f' %(batch_idx, loss, time.time() - start_time))
-	     total_train_loss += loss
-	   print('epoch %d total training loss = %.3f' %(epoch, total_train_loss/len(TrainImgLoader)))
+       #SAVE
+        if (epoch%100 == 0):
+           savefilename = args.savemodel+'/checkpoint_'+str(epoch)+'.tar'
+           torch.save({
+                'epoch': epoch,
+                'state_dict': model.state_dict(),
+                        'train_loss': total_train_loss/len(TrainImgLoader),
+            }, savefilename)
 
-	   #SAVE
-	   savefilename = args.savemodel+'/checkpoint_'+str(epoch)+'.tar'
-	   torch.save({
-		    'epoch': epoch,
-		    'state_dict': model.state_dict(),
-                    'train_loss': total_train_loss/len(TrainImgLoader),
-		}, savefilename)
+    logging.info('full training time = %.2f HR' %((time.time() - start_full_time)/3600))
+    print('full training time = %.2f HR' % ((time.time() - start_full_time) / 3600))
 
-	print('full training time = %.2f HR' %((time.time() - start_full_time)/3600))
+    #------------- TEST ------------------------------------------------------------
+    total_test_loss = 0
+    for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
+           test_loss = test(imgL,imgR, disp_L)
+           print('Iter %d test loss = %.3f' %(batch_idx, test_loss))
+           total_test_loss += test_loss
 
-	#------------- TEST ------------------------------------------------------------
-	total_test_loss = 0
-	for batch_idx, (imgL, imgR, disp_L) in enumerate(TestImgLoader):
-	       test_loss = test(imgL,imgR, disp_L)
-	       print('Iter %d test loss = %.3f' %(batch_idx, test_loss))
-	       total_test_loss += test_loss
-
-	print('total test loss = %.3f' %(total_test_loss/len(TestImgLoader)))
-	#----------------------------------------------------------------------------------
-	#SAVE test information
-	savefilename = args.savemodel+'testinformation.tar'
-	torch.save({
-		    'test_loss': total_test_loss/len(TestImgLoader),
-		}, savefilename)
+    logging.info('total test loss = %.3f' %(total_test_loss/len(TestImgLoader)))
+    #----------------------------------------------------------------------------------
+    #SAVE test information
+    savefilename = args.savemodel+'testinformation.tar'
+    torch.save({
+            'test_loss': total_test_loss/len(TestImgLoader),
+        }, savefilename)
 
 
 if __name__ == '__main__':

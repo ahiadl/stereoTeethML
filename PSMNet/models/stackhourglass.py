@@ -52,7 +52,16 @@ class hourglass(nn.Module):
 class PSMNet(nn.Module):
     def __init__(self, maxdisp):
         super(PSMNet, self).__init__()
-        self.maxdisp = maxdisp
+        mod = 16 - ((2 * maxdisp + 1)) % 16
+        halfMod = math.floor(mod / 2)
+        numOfDispPos = int(maxdisp + (mod - halfMod))
+        numOfDispNeg = int(maxdisp + halfMod)
+        self.maxdisp = int(numOfDispPos + numOfDispNeg + 1)
+
+        pivotIdx = int(math.floor(self.maxdisp / 2))
+        self.numOfDispPos = numOfDispPos
+        self.numOfDispNeg = numOfDispNeg
+        self.pivotIdx = pivotIdx
 
         self.feature_extraction = feature_extraction()
 
@@ -104,24 +113,16 @@ class PSMNet(nn.Module):
 
         refimg_fea     = self.feature_extraction(left)
         targetimg_fea  = self.feature_extraction(right)
-        mod = 16-((2*self.maxdisp)+1)%16
-        halfMod = math.floor(mod/2)
-        numOfDispPos = self.maxdisp + (mod-halfMod)
-        numOfDispNeg = self.maxdisp + halfMod
-        self.maxdisp = int(numOfDispPos + numOfDispNeg + 1)
-
-        dispNumOfValues = int(self.maxdisp/4) #for the quarter dimesions
-        pivotIdx = int(math.floor(numOfDispNeg/4)); #actually it is floor(numOfDispNeg/4)+1 but indices start from zero.
 
         #dispNumOfValues = int(math.floor((2 * self.maxdisp / 4)+1)) # turns the absolutr value max_disp to be corresponding number of elements in [-max_disp, max_disp];
-        cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1]*2, dispNumOfValues ,  refimg_fea.size()[2],  refimg_fea.size()[3]).zero_()).cuda()
+        cost = Variable(torch.FloatTensor(refimg_fea.size()[0], refimg_fea.size()[1]*2, self.maxdisp/4 ,  refimg_fea.size()[2],  refimg_fea.size()[3]).zero_()).cuda()
         #DIMENSIONS: [batch, 2*convLayers(features), 0.25D ,0.25H, 0.25W], defaule values: [1,64,31,85,93]
-        for i in range(dispNumOfValues):
-            dispPatchSize = abs(i - pivotIdx)
-            if i > pivotIdx :        # Positive Disparity
+        for i in range(self.maxdisp/4):
+            dispPatchSize = abs(i - self.pivotIdx)
+            if i > self.pivotIdx :        # Positive Disparity
              cost[:, :refimg_fea.size()[1], i, :, dispPatchSize:] = refimg_fea[:, :, :, dispPatchSize:]
              cost[:, refimg_fea.size()[1]:, i, :, dispPatchSize:] = targetimg_fea[:, :, :, :-dispPatchSize]
-            if i == pivotIdx :       # Zero Disparity
+            if i == self.pivotIdx :       # Zero Disparity
              cost[:, :refimg_fea.size()[1], i, :, :] = refimg_fea
              cost[:, refimg_fea.size()[1]:, i, :, :] = targetimg_fea
             else:                    # Negative Disparity
@@ -157,18 +158,18 @@ class PSMNet(nn.Module):
             pred1 = F.softmax(cost1,dim=1)
             # predx = [batch, H, W]
             pred1 = disparityregression(self.maxdisp)(pred1)
-            #pred1 = pred1.add(-numOfDispNeg)
+            pred1 = pred1.add(-self.numOfDispNeg)
 
             cost2 = torch.squeeze(cost2,1)
             pred2 = F.softmax(cost2,dim=1)
             pred2 = disparityregression(self.maxdisp)(pred2)
-            #pred2 = pred2.add(-numOfDispNeg)
+            pred2 = pred2.add(-self.numOfDispNeg)
 
         cost3 = F.upsample(cost3, [self.maxdisp,left.size()[2],left.size()[3]], mode='trilinear')
         cost3 = torch.squeeze(cost3,1)
         pred3 = F.softmax(cost3,dim=1)
         pred3 = disparityregression(self.maxdisp)(pred3)
-        #pred3 = pred3.add(-numOfDispNeg)
+        pred3 = pred3.add(-self.numOfDispNeg)
 
         if self.training:
             return pred1, pred2, pred3

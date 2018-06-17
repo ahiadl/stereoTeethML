@@ -91,10 +91,10 @@ def main():
 
        imgL_o = (skimage.io.imread(test_left_img[inx]).astype('float32'))
        imgR_o = (skimage.io.imread(test_right_img[inx]).astype('float32'))
-       imgL = processed(imgL_o).numpy()
-       imgR = processed(imgR_o).numpy()
-       imgL = np.reshape(imgL,[1,3,imgL.shape[1],imgL.shape[2]])
-       imgR = np.reshape(imgR,[1,3,imgR.shape[1],imgR.shape[2]])
+       imgL = processed(imgL_o)
+       imgR = processed(imgR_o)
+       # imgL = np.reshape(imgL,[1,3,imgL.shape[1],imgL.shape[2]])
+       # imgR = np.reshape(imgR,[1,3,imgR.shape[1],imgR.shape[2]])
 
        # pad to (384, 1248)
        top_pad = 384-imgL.shape[2]

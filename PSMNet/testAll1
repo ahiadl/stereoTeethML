@@ -1,0 +1,66 @@
+from __future__ import print_function
+import os
+import torch
+import torch.nn as nn
+from dataloader import teethLoader as DA
+import skimage
+import skimage.io
+import skimage.transform
+import skimage.exposure
+from torch.autograd import Variable
+from models import *
+
+modelPath  = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/pretrainedModel/checkpoint_1000.tar'
+leftDir    = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Left/'
+rightDir   = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Right/'
+gtDir      = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/GT/'
+resultsDir = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/results/'
+
+
+class forwardTest():
+     def __init__(self, modelPath, maxDisp):
+          self.model = stackhourglass(maxDisp)
+          self.model = nn.DataParallel(self.model, device_ids=[0])
+          self.model.cuda()
+
+          state_dict = torch.load(modelPath)
+          self.model.load_state_dict(state_dict['state_dict'])
+
+          print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in self.model.parameters()])))
+
+     def test(self, leftIm, rightIm, dispIm):
+          self.model.eval()
+          i = 0
+          self.testImgLoader = torch.utils.data.DataLoader(
+               DA.myImageFloder(leftIm, rightIm, dispIm, True),
+               batch_size=1, shuffle=True, num_workers=8, drop_last=False)
+          for batchIdx, (imgL, imgR, disp_GT) in enumerate(self.testImgLoader):
+               imgL = torch.FloatTensor(imgL).cuda()
+               imgR = torch.FloatTensor(imgR).cuda()
+
+               imgL, imgR = Variable(imgL, volatile=True), Variable(imgR, volatile=True)
+
+               output = self.model(imgL, imgR)
+               output = torch.squeeze(output)
+
+               pred_disp = output.data.cpu().numpy()
+               return pred_disp
+
+
+def main():
+    runModel = forwardTest(modelPath, 60)
+
+    idxList   = [img[:-4] for img in os.listdir(leftDir)]
+    leftList  = [leftDir + img for img in os.listdir(leftDir)]
+    rightList = [rightDir + img for img in os.listdir(rightDir)]
+    gtList    = [gtDir + img for img in os.listdir(gtDir)]
+
+    for i in range(len(os.listdir(leftDir))):
+
+        pred_disp = runModel.test([leftList[i]], [rightList[i]], [gtList[i]])
+        print('done Calculating image number %s' % (idxList[i]))
+        save_scale = (pred_disp * 256) + (2 ** 15)
+        skimage.io.imsave("%s%s_calc.png" % (resultsDir, idxList[i]), save_scale.astype('uint16'))
+
+if __name__ == '__main__':
+    main()
