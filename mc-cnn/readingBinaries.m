@@ -27,21 +27,21 @@
   disparityMat =reshape(minMC, 338, 370,1);
   disparityMat(disparityMat > maxD+1) = disparityMat(disparityMat > maxD+1) - (maxD+1);
   
-  cbca1 = memmapfile('CBCA1ahiad.bin', 'Format', 'single').Data;
+  cbca1 = memmapfile('CBCA1-leftAhiad.bin', 'Format', 'single').Data;
   cbca1 = permute(reshape(cbca1, [370 338 121]), [3 2 1]);
   minValCBCA1 = min(min(min(cbca1)));
   [~,minCBCA1] = min(cbca1,[],1);
   cbca1Mat =reshape(minCBCA1, 338, 370,1);
   cbca1Mat(cbca1Mat > maxD+1) = cbca1Mat(cbca1Mat > maxD+1) - (maxD+1); 
   
-  sgm = memmapfile('SGMahiad.bin', 'Format', 'single').Data;
+  sgm = memmapfile('SGM-leftAhiad.bin', 'Format', 'single').Data;
   sgm = permute(reshape(sgm, [370 338 121]), [3 2 1]);
   minValSGM = min(min(min(sgm)));
   [~,minSGM] = min(abs(sgm),[],1);
   sgmMat =reshape(minSGM, 338, 370,1);
   sgmMat(sgmMat > maxD+1) = sgmMat(sgmMat > maxD+1) - (maxD+1);
   
-  cbca2 = memmapfile('CBCA2ahiad.bin', 'Format', 'single').Data;
+  cbca2 = memmapfile('CBCA2-leftAhiad.bin', 'Format', 'single').Data;
   cbca2 = permute(reshape(cbca2, [370 338 121]), [3 2 1]);
   minValCBCA2 = min(min(min(cbca2)));
   [~,minCBCA2] = min(abs(cbca2),[],1);

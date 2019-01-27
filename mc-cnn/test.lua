@@ -1,135 +1,96 @@
-#! /usr/bin/env luajit
+eps = 1e-3
 
-require 'Test'
-require 'cutorch'
-require 'cunn'
-require 'cudnn'
-require 'libadcensus'
+function testJacobian(module, input, x, dx)
+   module:forward(input:clone())
 
-include('Margin2.lua')
-include('StereoJoin1.lua')
-include('StereoJoin.lua')
-include('Normalize.lua')
+   x = x or input
 
-function test_StereoJoin1()
-   print('test_StereoJoin1')
-   input_ = torch.Tensor(6, 4, 5, 6):normal()
+   local sx = torch.CudaTensor(x:storage())
+   local gradInput = torch.CudaTensor():resizeAs(module.output)
+   local sgradInput = torch.CudaTensor(gradInput:storage())
+   local jacobian = torch.Tensor(sx:nElement(), gradInput:nElement())
+   local jacobian_hat = torch.Tensor(sx:nElement(), gradInput:nElement())
 
-   -- forward
-   output_ = torch.Tensor(input_:size(1) / 2, 1, input_:size(3), input_:size(4))
-   for dim1 = 1, output_:size(1) do
-      for dim3 = 1, output_:size(3) do
-         for dim4 = 1, output_:size(4) do
-            local sum = 0
-            for dim2_ = 1, input_:size(2) do
-               left = input_[{dim1 * 2 - 1,dim2_,dim3,dim4}]
-               right = input_[{dim1 * 2,dim2_,dim3,dim4}]
-               sum = sum + left * right
-            end
-            output_[{dim1,1,dim3,dim4}] = sum
-         end
+   -- Build Jacobian from module's updateGradInput
+   for i = 1,gradInput:nElement() do
+      sgradInput:zero()
+      sgradInput[i] = 1
+      module:updateGradInput(input, gradInput)
+      if dx then
+         dx:zero()
+         module:accGradParameters(input, gradInput)
+         jacobian:select(2, i):copy(dx)
+      else
+         jacobian:select(2, i):copy(module.gradInput)
       end
    end
 
-   module = nn.Sequential()
-   module:add(nn.StereoJoin1(op))
-   module:cuda()
+   -- Numerically estimate the Jacobian
+   for i = 1,sx:nElement() do
+      orig = sx[i]
+      sx[i] = orig + eps
+      module:forward(input:clone())
+      local f1 = module.output:clone()
 
-   module:forward(input_:cuda())
-   print(output_:add(-1, module.output:double()):abs():max())
+      sx[i] = orig - eps
+      module:forward(input:clone())
+      local f2 = module.output:clone()
 
-   -- backward
-   print(testJacobian(module, input_:cuda()))
+      jacobian_hat:select(1, i):copy(f1:add(-1, f2):div(2 * eps))
+      sx[i] = orig
+   end
+
+   return jacobian:add(-1, jacobian_hat):abs():max()
 end
 
-function test_StereoJoin()
-   print('test_StereoJoin')
-
-   input_ = torch.Tensor(2, 32, 10, 20):normal()
-   output_ = torch.Tensor(1, 16, 10, 20):zero()
-
-   for dim2 = 1, output_:size(2) do
-      for dim3 = 1, output_:size(3) do
-         for dim4 = 1, output_:size(4) do
-            if dim4 - dim2 + 1 <= 0 then
-               output_[{1,dim2,dim3,dim4}] = 0 / 0
-            else
-               sum = 0.0
-               for dim2_ = 1, input_:size(2) do
-                  left = input_[{1,dim2_,dim3,dim4}]
-                  right = input_[{2,dim2_,dim3,dim4 - dim2 + 1}]
-                  sum = sum + left * right
-               end
-               output_[{1,dim2,dim3,dim4}] = sum
-            end
-         end
-      end
-   end
-
-   module = nn.StereoJoin(output_:size(2)):cuda()
-   module:forward(input_:cuda())
-
-   print(output_:add(-1, module.output:double()):abs():max())
+function testJacobianParameters(module, input)
+   x, dx = module:getParameters()
+   return testJacobian(module, input, x, dx)
 end
 
-test_StereoJoin()
+function testCriterion(module, input, target)
+   local sinput = torch.CudaTensor(input:storage())
+   local grad_hat = torch.Tensor(sinput:nElement())
+   for i = 1,sinput:nElement() do
+      local orig = sinput[i]
+      sinput[i] = orig + eps
+      local f1 = module:forward(input, target)
 
-function test_Normalize()
-   print('test_Normalize')
-   input_ = torch.Tensor(2, 3, 4, 5):normal()
-   output_ = torch.Tensor(2, 3, 4, 5):normal()
-   norm_ = torch.Tensor(2, 1, 4, 5):zero()
+      sinput[i] = orig - eps
+      local f2 = module:forward(input, target)
 
-   -- forward
-   for dim1 = 1, output_:size(1) do
-      for dim3 = 1, output_:size(3) do
-         for dim4 = 1, output_:size(4) do
-            sum = 0.0
-            for dim2 = 1, output_:size(2) do
-               x = input_[{dim1,dim2,dim3,dim4}]
-               sum = sum + x * x
-            end
-            norm_[{dim1,1,dim3,dim4}] = sum
-            for dim2 = 1, output_:size(2) do
-               output_[{dim1,dim2,dim3,dim4}] = input_[{dim1,dim2,dim3,dim4}] / math.sqrt(sum)
-            end
-         end
-      end
+      grad_hat[i] = (f1 - f2) / (2 * eps)
+      sinput[i] = orig
    end
 
-   module = nn.Normalize():cuda()
-   module:forward(input_:cuda())
-
-   print(norm_:add(-1, module.norm:double()):abs():max())
-   print(output_:add(-1, module.output:double()):abs():max())
-
-   -- backward
-   print(testJacobian(module, input_:cuda()))
+   module:forward(input, target)
+   module:backward(input, target)
+   return module.gradInput:double():add(-1, grad_hat):abs():max()
 end
 
+function testNetworkParameters(network, criterion, input, target)
+   local parameters, grad_parameters = network:getParameters()
+   local grad_hat = torch.Tensor(parameters:nElement())
 
-function test_Margin2()
-   print('test_Margin2')
+   for i = 1,parameters:nElement() do
+      local orig = parameters[i]
+      parameters[i] = orig + eps
+      network:forward(input)
+      local f1 = criterion:forward(network.output, target)
 
-   margin = 0.1
-   pow = 2
-   input_ = torch.Tensor(64, 1, 1, 1):uniform()
-   tmp_ = torch.Tensor(32, 1, 1, 1):zero()
+      parameters[i] = orig - eps
+      network:forward(input)
+      local f2 = criterion:forward(network.output, target)
 
-   -- forward
-   for dim1 = 1, tmp_:size(1) do
-      d = math.max(0, input_[{dim1 * 2,1,1,1}] - input_[{dim1 * 2 - 1,1,1,1}] + margin)
-      if pow == 2 then
-         d = d * d * 0.5
-      end
-      tmp_[dim1] = d
+      grad_hat[i] = (f1 - f2) / (2 * eps)
+      parameters[i] = orig
    end
 
-   module = nn.Margin2(margin, pow):cuda()
-   module:forward(input_:cuda(), nil)
+   network:forward(input)
+   criterion:forward(network.output, target)
+   criterion:backward(network.output, target)
+   network:zeroGradParameters()
+   network:backward(input, criterion.gradInput)
 
-   print(tmp_:add(-1, module.tmp:double()):abs():max())
-
-   -- backward
-   print(testCriterion(module, input_:cuda(), nil))
+   return grad_parameters:double():add(-1, grad_hat):abs():max()
 end

@@ -1181,8 +1181,13 @@ function stereo_predict(x_batch, id)
       for d=1, disp_max+1 do
          vol[{1,disp_max+d,{},{}}]:copy(tmpVol[{1,d,{},{}}])
       end
+      
+      
+
 
       if( direction == -1) then 
+      print('CM')
+      --print(vol)
       torch.DiskFile(('testLeft.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())
       end
       sm_active = sm_active and (opt.sm_terminate ~= 'cnn')
@@ -1212,6 +1217,8 @@ function stereo_predict(x_batch, id)
       
       if( direction == -1) then 
          torch.DiskFile(('CBCA1-leftAhiad.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())
+         print('CBCA1')
+         --print(vol)
       else
          torch.DiskFile(('CBCA1-rightAhiad.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())
       end
@@ -1228,11 +1235,22 @@ function stereo_predict(x_batch, id)
          do
             local out = torch.CudaTensor(1, vol:size(2), vol:size(3), vol:size(4))
             local tmp = torch.CudaTensor(vol:size(3), vol:size(4))
+            
+            if direction == -1 then
+               print('SGM0')
+               --print(vol)
+            end
+            
             for _ = 1,opt.sgm_i do
                out:zero()
                adcensus.sgm2(x_batch[1], x_batch[2], vol, out, tmp, opt.pi1, opt.pi2, opt.tau_so,
                   opt.alpha1, opt.sgm_q1, opt.sgm_q2, direction)
                vol:copy(out):div(4)
+            end
+            
+            if direction == -1 then
+               print('SGM1')
+               print(vol)
             end
             if (no_negative_disp == 1) then
                 vol:resize(1, disp_max+1, x_batch:size(3), x_batch:size(4))
@@ -1255,6 +1273,8 @@ function stereo_predict(x_batch, id)
       
       if( direction == -1) then 
         torch.DiskFile(('SGM-leftAhiad.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())
+        print('SGM')
+        --print(vol)
       else
         torch.DiskFile(('SGM-rightAhiad.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())
       end
@@ -1279,6 +1299,10 @@ function stereo_predict(x_batch, id)
       sm_active = sm_active and (opt.sm_terminate ~= 'cbca2')
 
       if opt.a == 'predict' then
+         if direction == -1 then
+            print('CBCA2')
+            --print(vol)
+         end
          local fname = direction == -1 and 'left' or 'right'
          print(('Writing %s.bin, %d x %d x %d x %d'):format(fname, vol:size(1), vol:size(2), vol:size(3), vol:size(4)))
          torch.DiskFile(('%s.bin'):format(fname), 'w'):binary():writeFloat(vol:float():storage())

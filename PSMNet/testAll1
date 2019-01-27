@@ -11,10 +11,10 @@ from torch.autograd import Variable
 from models import *
 
 modelPath  = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/pretrainedModel/checkpoint_1000.tar'
-leftDir    = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Left/'
-rightDir   = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Right/'
-gtDir      = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/GT/'
-resultsDir = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/results/'
+leftDir    = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/augmentedData/Left/'
+rightDir   = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/augmentedData/Right/'
+gtDir      = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/augmentedData/GT/'
+resultsDir = '/media/ahiadlevi/Elements/stereoTeethML/PSMNet/results/augmentedTestSet/'
 
 
 class forwardTest():

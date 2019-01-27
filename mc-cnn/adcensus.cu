@@ -1682,13 +1682,13 @@ int readPNG16(lua_State *L)
 			uint16_t val = image.get_pixel(j, i);
             //printf("%f", val);
             //fprintf(f, "Pf\n%d %d\n-0.003922\n", width, height);
-			img[i * width + j] = == 0 ? 0.0 : (((float)val)/256);
+			img[i * width + j] = val == 0 ? 0.0 : (((float)val)/256);
             /*float tmp = val == 0 ? 0.0 : (((float)val)/256);
             if (tmp < 0) tmp = tmp +380;
             img[i * width + j] = tmp;*/
 		}
 	}
-    fclose(f);
+    //fclose(f);
 	return 0;
 
 }
