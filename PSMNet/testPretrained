@@ -1,0 +1,103 @@
+from __future__ import print_function
+import argparse
+import os
+import random
+import torch
+import torch.nn as nn
+import torch.nn.parallel
+import torch.backends.cudnn as cudnn
+import torch.optim as optim
+import torch.utils.data
+from torch.autograd import Variable
+import torch.nn.functional as F
+# import torch.image as Image
+from PIL import Image
+import skimage
+import skimage.io
+import skimage.transform
+import skimage.exposure
+import numpy as np
+import time
+import math
+from utils import preprocess
+from models import *
+from PIL import Image
+from dataloader import teethLoader as DA
+
+# 2012 data /media/jiaren/ImageNet/data_scene_flow_2012/testing/
+
+parser = argparse.ArgumentParser(description='PSMNet')
+parser.add_argument('--modelpath', default='/media/ahiadlevi/Elements/stereoTeethML/PSMNet/pretrainedModel/checkpoint_1000.tar',
+                    help='KITTI version')
+parser.add_argument('--left', default='/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Left/28.png',
+                    help='Left Image Path')
+parser.add_argument('--right', default='/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/Right/28.png',
+                    help='Right Image Path')
+parser.add_argument('--gt', default='/media/ahiadlevi/Elements/stereoTeethML/PSMNet/data/testing/GT/28.png',
+                    help='Ground Trouth Dispartiy Image Path')
+parser.add_argument('--save_name', default='28',
+                    help='Path to output file')
+parser.add_argument('--loadmodel', default=True,
+                    help='loading model')
+parser.add_argument('--model', default='stackhourglass',
+                    help='select model')
+parser.add_argument('--maxdisp', type=int, default=60,
+                    help='maxium disparity')
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                    help='enables CUDA training')
+parser.add_argument('--seed', type=int, default=1, metavar='S',
+                    help='random seed (default: 1)')
+args = parser.parse_args()
+args.cuda = not args.no_cuda and torch.cuda.is_available()
+
+test_left_img = [args.left]
+test_right_img = [args.right]
+test_disp_img  = [args.gt]
+
+testImgLoader = torch.utils.data.DataLoader(
+         DA.myImageFloder(test_left_img, test_right_img, test_disp_img, True),
+         batch_size= 1, shuffle= True, num_workers= 8, drop_last=False)
+
+if args.model == 'stackhourglass':
+    model = stackhourglass(args.maxdisp)
+elif args.model == 'basic':
+    model = basic(args.maxdisp)
+else:
+    print('no model')
+
+model = nn.DataParallel(model, device_ids=[0])
+model.cuda()
+
+if args.loadmodel is not None:
+    state_dict = torch.load(args.modelpath)
+    model.load_state_dict(state_dict['state_dict'])
+
+print('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+
+def test(imgL,imgR):
+        model.eval()
+
+        if args.cuda:
+           imgL = torch.FloatTensor(imgL).cuda()
+           imgR = torch.FloatTensor(imgR).cuda()
+
+        imgL, imgR= Variable(imgL, volatile = True), Variable(imgR, volatile = True)
+
+        output = model(imgL,imgR)
+        output = torch.squeeze(output)
+        pred_disp = output.data.cpu().numpy()
+
+        return pred_disp
+
+def main():
+    for batchIdx, (imgL, imgR, disp_GT) in enumerate(testImgLoader):
+        start_time = time.time()
+        pred_disp = test(imgL,imgR)
+        print('time = %.2f' %(time.time() - start_time))
+    # imToSave = Image.fromarray(pred_disp)
+    # imToSave.save("testPred.jpg")
+    save_scale = pred_disp*256 + 2**15
+    skimage.io.imsave("test.png",save_scale.astype('uint16'))
+
+if __name__ == '__main__':
+   main()
